@@ -1,0 +1,97 @@
+<%
+	require 'net/https'
+	require 'json'
+	require 'uri'
+
+
+	key = 'AIzaSyAnL_4p07YTsjkM--F0N2sLEEC4l2TXVck'
+	strategy = 'mobile'
+	domain = 'http://adgoi.com/'
+	url = "https://www.googleapis.com/pagespeedonline/v4/runPagespeed?url=" + \
+	      URI.encode(domain) + \
+				      "&key=#{key}&strategy=#{strategy}"
+
+
+	uri = URI.parse(url)
+	http = Net::HTTP.new(uri.host, uri.port)
+	http.use_ssl = true
+	http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+	request = Net::HTTP::Get.new(uri.request_uri)
+	response = http.request(request)
+	data = JSON.parse(response.body)
+
+	parameters = ['AvoidLandingPageRedirects','EnableGzipCompression','LeverageBrowserCaching','MainResourceServerResponseTime','MinifyCss','MinifyHTML','MinifyJavaScript','MinimizeRenderBlockingResources','OptimizeImages','PrioritizeVisibleContent']
+%>
+
+<%= data['ruleGroups']['SPEED']['score'] %>
+<ol>
+	<%	parameters.each do |parameter| %>
+		<% current_factor = data['formattedResults']['ruleResults'][parameter] %>
+		<li><%= current_factor['localizedRuleName'] %></li>
+		<%	current_factor.each do |key,value|	%>
+			<% if key == 'ruleImpact' %>
+				Impact : <%= value %><br>
+			<% elsif key == 'summary' %>
+				<% summary = value %>
+				<% format = '' %>
+				<% summary.each do |summaryKey, summaryValue| %>
+					<% if summaryKey == 'format' %>
+						<% format =  summaryValue %>
+					<% end %>
+					<% if summaryKey == 'args' %>
+						<% if !format.index('BEGIN_LINK')%>
+							<% summaryValue.each do |arg| %>
+								<% format.gsub!("{{#{arg['key']}}}",arg['value'])	%>
+							<% end %>
+						<%else%>
+							<% summaryValue.each do |arg| %>
+								<% format.gsub!("{{BEGIN_LINK}}", "<a href = \'#{arg['value']}\'>") %>
+								<% format.gsub!("{{END_LINK}}", "</a>") %>
+							<%end%>
+						<%end%>
+						<%=format.html_safe %>
+					<% end %>
+				<% end %>
+			<% elsif key == 'urlBlocks' %>
+				<% value.each do |urlBlock|  %>
+					<% urlBlock.each do |urlBlockKey,urlBlockValue| %>
+						<% if urlBlockKey == 'header' %>
+							<% format = '' %>
+							<% urlBlockValue.each do |eachUrlBlockKey,eachUrlBlockValue| %>
+								<% if eachUrlBlockKey == 'format' %>
+									<%format = eachUrlBlockValue %>
+								<% end %>
+								<% if eachUrlBlockKey == 'args' %>
+									<% eachUrlBlockValue.each do |argsHeaderUrlBlock| %>
+										<% format.gsub!("{{#{argsHeaderUrlBlock['key']}}}",argsHeaderUrlBlock['value']) %>
+									<% end %>
+								<% end %>
+							<% end %>
+						<% elsif urlBlockKey == 'urls' %>
+							<% urlBlockValue.each do |eachUrlBlockValue| %>
+								<% eachUrlBlockValue.each do |eachUrlBlockValueKey,eachUrlBlockValueValue| %>
+									<% if eachUrlBlockValueKey == 'result' %>
+										<% format = "" %>
+										<ul>
+										<% eachUrlBlockValueValue.each do |key,value| %>
+											<% if key == 'format' %>
+												<% format = value %>
+											<% end %>
+											<% if key == 'args' %>
+												<% value.each do |v| %>
+													<% format.gsub!("{{#{v['key']}}}", v['value']) %>
+												<% end %>
+												<li><%= format %></li>
+											<% end %>
+										<% end %>
+										</ul>
+									<% end %>
+								<% end %>
+							<%end %>
+						<% end %>
+					<% end %>
+				<% end %>
+			<% end %>
+		<% end %>
+	<% end %>
+</ol>
