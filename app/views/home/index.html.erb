@@ -31,8 +31,8 @@ body{
 
 
 	key = 'AIzaSyAnL_4p07YTsjkM--F0N2sLEEC4l2TXVck'
-	strategy = 'mobile'
-	domain = 'http://bhajanaarti.com/'
+	strategy = 'desktop'
+	domain = 'http://blogvault.net/'
 	url = "https://www.googleapis.com/pagespeedonline/v4/runPagespeed?url=" + \
 	      URI.encode(domain) + \
 				      "&key=#{key}&strategy=#{strategy}"
@@ -46,7 +46,9 @@ body{
 	response = http.request(request)
 	data = JSON.parse(response.body)
 
-	parameters = ['AvoidLandingPageRedirects','EnableGzipCompression','LeverageBrowserCaching','MainResourceServerResponseTime','MinifyCss','MinifyHTML','MinifyJavaScript','MinimizeRenderBlockingResources','OptimizeImages','PrioritizeVisibleContent']
+	parameters = ['AvoidLandingPageRedirects','EnableGzipCompression','LeverageBrowserCaching',
+	'MainResourceServerResponseTime','MinifyCss','MinifyHTML','MinifyJavaScript',
+	'MinimizeRenderBlockingResources','OptimizeImages','PrioritizeVisibleContent']
 %>
 
 <h2>Page Speed Score : <%= data['ruleGroups']['SPEED']['score'] %></h2>
@@ -122,7 +124,7 @@ body{
 						<%end%>
 					<% end %>
 				<% end %>
-				<strong style='font-size:18px;'><%=format.html_safe %></strong>
+				<strong style='color:#009a2d; font-weight:normal;'><%=format.html_safe %></strong><br>
 			<% elsif key == 'urlBlocks' %>
 				<% value.each do |urlBlock|  %>
 					<% urlBlock.each do |urlBlockKey,urlBlockValue| %>
@@ -135,26 +137,28 @@ body{
 								<% if eachUrlBlockKey == 'args' %>
 									<% eachUrlBlockValue.each do |argsHeaderUrlBlock| %>
 										<% format.gsub!("{{#{argsHeaderUrlBlock['key']}}}",argsHeaderUrlBlock['value']) %>
+											<% format.gsub!("{{BEGIN_LINK}}","<a href = \'#{argsHeaderUrlBlock['value']}\'>") %>
+												<% format.gsub!("{{END_LINK}}","</a>") %>
+									<% end %>
 									<% end %>
 								<% end %>
-							<% end %>
+								<strong style='color:#dd4b39; font-weight:normal;'><%= format.html_safe %></strong>
 						<% elsif urlBlockKey == 'urls' %>
 							<% urlBlockValue.each do |eachUrlBlockValue| %>
 								<% eachUrlBlockValue.each do |eachUrlBlockValueKey,eachUrlBlockValueValue| %>
 									<% if eachUrlBlockValueKey == 'result' %>
 										<% format = "" %>
 										<ul>
-										<% eachUrlBlockValueValue.each do |key,value| %>
-											<% if key == 'format' %>
-												<% format = value %>
-											<% end %>
-											<% if key == 'args' %>
-												<% value.each do |v| %>
-													<% format.gsub!("{{#{v['key']}}}", v['value']) %>
+											<% eachUrlBlockValueValue.each do |key,value| %>
+												<% if key == 'format' %>
+													<% format = value %>
+												<% elsif key == 'args' %>
+													<% value.each do |v| %>
+														<% format.gsub!("{{#{v['key']}}}", v['value']) %>
+													<% end %>
+													<li><%= format %></li>
 												<% end %>
-												<li><%= format %></li>
 											<% end %>
-										<% end %>
 										</ul>
 									<% end %>
 								<% end %>
