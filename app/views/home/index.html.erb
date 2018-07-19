@@ -31,8 +31,8 @@ body{
 
 
 	key = 'AIzaSyAnL_4p07YTsjkM--F0N2sLEEC4l2TXVck'
-	strategy = 'desktop'
-	domain = 'http://blogvault.net/'
+	strategy = 'mobile'
+	domain = 'http://bhajanaarti.com/'
 	url = "https://www.googleapis.com/pagespeedonline/v4/runPagespeed?url=" + \
 	      URI.encode(domain) + \
 				      "&key=#{key}&strategy=#{strategy}"
@@ -56,10 +56,12 @@ body{
 	fcp_fast = data['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['distributions'][0]['proportion']*100
 	fcp_average = data['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['distributions'][1]['proportion']*100
 	fcp_slow = data['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['distributions'][2]['proportion']*100
+	fcp_cat = data['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['category']
 
 	dcl_fast = data['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['distributions'][0]['proportion']*100
 	dcl_average = data['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['distributions'][1]['proportion']*100
 	dcl_slow = data['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['distributions'][2]['proportion']*100
+	dcl_cat = data['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['category']
 %>
 <table>
 	<tr>
@@ -71,6 +73,7 @@ body{
 				<div class = 'slow' style = 'width:<%=fcp_slow %>%;'></div>
 			</div>
 		</td>
+		<td><%= fcp_cat %></td>
 		<tr>
 			<td> DCL </td>
 			<td>
@@ -80,6 +83,7 @@ body{
 					<div class = 'slow' style = 'width:<%=dcl_slow %>%;'></div>
 				</div>
 			</td>
+			<td><%= dcl_cat %></td>
 		</tr>
 </table>
 
