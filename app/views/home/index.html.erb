@@ -1,3 +1,29 @@
+<style>
+body{
+	font-family:arial;
+}
+
+.percentage_bar{
+	width:500px;
+	height:30px;
+	float:left;
+}
+.fast{
+	height:100%;
+	background:#009a2d;
+	float:left;
+}
+.average{
+	height:100%;
+	background:#fda100;
+	float:left;
+}
+.slow{
+	height:100%;
+	background:#dd4b39;
+	float:left;
+}
+</style>
 <%
 	require 'net/https'
 	require 'json'
@@ -5,8 +31,8 @@
 
 
 	key = 'AIzaSyAnL_4p07YTsjkM--F0N2sLEEC4l2TXVck'
-	strategy = 'mobile'
-	domain = 'http://adgoi.com/'
+	strategy = 'desktop'
+	domain = 'http://blogvault.net/'
 	url = "https://www.googleapis.com/pagespeedonline/v4/runPagespeed?url=" + \
 	      URI.encode(domain) + \
 				      "&key=#{key}&strategy=#{strategy}"
@@ -23,25 +49,66 @@
 	parameters = ['AvoidLandingPageRedirects','EnableGzipCompression','LeverageBrowserCaching','MainResourceServerResponseTime','MinifyCss','MinifyHTML','MinifyJavaScript','MinimizeRenderBlockingResources','OptimizeImages','PrioritizeVisibleContent']
 %>
 
-<%= data['ruleGroups']['SPEED']['score'] %>
+<h2>Page Speed Score : <%= data['ruleGroups']['SPEED']['score'] %></h2>
+
+
+<%
+	fcp_fast = data['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['distributions'][0]['proportion']*100
+	fcp_average = data['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['distributions'][1]['proportion']*100
+	fcp_slow = data['loadingExperience']['metrics']['FIRST_CONTENTFUL_PAINT_MS']['distributions'][2]['proportion']*100
+
+	dcl_fast = data['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['distributions'][0]['proportion']*100
+	dcl_average = data['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['distributions'][1]['proportion']*100
+	dcl_slow = data['loadingExperience']['metrics']['DOM_CONTENT_LOADED_EVENT_FIRED_MS']['distributions'][2]['proportion']*100
+%>
+<table>
+	<tr>
+		<td> FCP </td>
+		<td>
+			<div class = 'percentage_bar'>
+				<div class = 'fast' style = 'width:<%=fcp_fast %>%;'></div>
+				<div class = 'average' style = 'width:<%=fcp_average %>%;'></div>
+				<div class = 'slow' style = 'width:<%=fcp_slow %>%;'></div>
+			</div>
+		</td>
+		<tr>
+			<td> DCL </td>
+			<td>
+				<div class = 'percentage_bar'>
+					<div class = 'fast' style = 'width:<%=dcl_fast %>%;'></div>
+					<div class = 'average' style = 'width:<%=dcl_average %>%;'></div>
+					<div class = 'slow' style = 'width:<%=dcl_slow %>%;'></div>
+				</div>
+			</td>
+		</tr>
+</table>
+
+<h2> Optimization Report </h2>
 <ol>
 	<%	parameters.each do |parameter| %>
 		<% current_factor = data['formattedResults']['ruleResults'][parameter] %>
 		<li><%= current_factor['localizedRuleName'] %></li>
 		<%	current_factor.each do |key,value|	%>
 			<% if key == 'ruleImpact' %>
-				Impact : <%= value %><br>
+				Impact :
+				<span style='color:<%= value==0?'#96CB7F':'#F00' %>; font-weight:bold;'>
+					<%= value.to_f.round(3) %>
+				</span>
+				<br>
 			<% elsif key == 'summary' %>
 				<% summary = value %>
 				<% format = '' %>
 				<% summary.each do |summaryKey, summaryValue| %>
 					<% if summaryKey == 'format' %>
 						<% format =  summaryValue %>
-					<% end %>
-					<% if summaryKey == 'args' %>
+					<% elsif summaryKey == 'args' %>
 						<% if !format.index('BEGIN_LINK')%>
 							<% summaryValue.each do |arg| %>
-								<% format.gsub!("{{#{arg['key']}}}",arg['value'])	%>
+								<% if arg['key'] %>
+									<% format.gsub!("{{#{arg['key']}}}",arg['value'])	%>
+								<% else %>
+									<% format = summaryValue %>
+								<% end %>
 							<% end %>
 						<%else%>
 							<% summaryValue.each do |arg| %>
@@ -49,9 +116,9 @@
 								<% format.gsub!("{{END_LINK}}", "</a>") %>
 							<%end%>
 						<%end%>
-						<%=format.html_safe %>
 					<% end %>
 				<% end %>
+				<strong style='font-size:18px;'><%=format.html_safe %></strong>
 			<% elsif key == 'urlBlocks' %>
 				<% value.each do |urlBlock|  %>
 					<% urlBlock.each do |urlBlockKey,urlBlockValue| %>
